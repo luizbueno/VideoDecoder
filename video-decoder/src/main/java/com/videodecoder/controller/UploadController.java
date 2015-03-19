@@ -30,24 +30,7 @@ public class UploadController {
 	private UploadedFile file;
 
 	public void handleFileUpload(FileUploadEvent event) {
-
-		//		ZencoderClient client = new ZencoderClient("bebd51c3884d45e0538d88a80a9fe102");
-		//		
-		//		ZencoderCreateJobRequest job = new ZencoderCreateJobRequest();
-		//		job.setInput("s3://zencodertesting/test.mov");
-		//		List<ZencoderOutput> outputs = new ArrayList<ZencoderOutput>();
-		//
-		//		ZencoderOutput output1 = new ZencoderOutput();
-		//		output1.setFormat(ContainerFormat.MP4);
-		//		outputs.add(output1);
-		//
-		//		ZencoderOutput output2 = new ZencoderOutput();
-		//		output2.setFormat(ContainerFormat.WEBM);
-		//		outputs.add(output2);
-		//
-		//		job.setOutputs(outputs);
-		//		ZencoderCreateJobResponse response = client.createZencoderJob(job);
-
+		//teste
 		try {
 			
 			String caminho = FacesContext.getCurrentInstance().getExternalContext()  
