@@ -76,7 +76,7 @@ public class UploadController implements Serializable{
 			setUrlArquivo("https://s3-sa-east-1.amazonaws.com/elasticbeanstalk-sa-east-1-585199353882/" + file.getFileName());
 
 			realizaConversaoVideo();
-			
+
 			FacesMessage message2 = new FacesMessage("O Arquivo", event.getFile().getFileName() + " realizou o upload com sucesso! ");
 			FacesContext.getCurrentInstance().addMessage(null, message2);
 
@@ -107,11 +107,11 @@ public class UploadController implements Serializable{
 			e.printStackTrace();
 		}  
 	}
-	
+
 	public void realizaConversaoVideo() {
-		
+
 		ZencoderClient client = new ZencoderClient("bebd51c3884d45e0538d88a80a9fe102");
-		
+
 		ZencoderCreateJobRequest job = new ZencoderCreateJobRequest();
 		job.setInput(getUrlArquivo());
 		List<ZencoderOutput> outputs = new ArrayList<ZencoderOutput>();
@@ -126,7 +126,8 @@ public class UploadController implements Serializable{
 			setUrlArquivo(response.getOutputs().get(0).getUrl());
 		} catch (ZencoderClientException e) {
 			FacesMessage message5 = new FacesMessage("O Arquivo", file.getFileName() + " falhou ao realizar o Upload." + 
-					"Foi detectado uma exceção do tipo ZencoderClientException, que siginifica que ocorreu algum problema durante a conversão do vídeo.");
+					"Foi detectado uma exceção do tipo ZencoderClientException, que siginifica que ocorreu algum problema durante a conversão do vídeo. "
+					+ "Erro: " + e.getMessage());
 			FacesContext.getCurrentInstance().addMessage(null, message5);
 			e.printStackTrace();
 		}
