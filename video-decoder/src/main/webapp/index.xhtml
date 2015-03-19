@@ -11,9 +11,12 @@
 		<h3>Teste de Aplicação - Video Decoder</h3>
 		<h4>Upload</h4>
 		<h:form>
-		    <p:fileUpload fileUploadListener="#{uploadController.handleFileUpload}" mode="advanced" dragDropSupport="false"
-		           update="messages" sizeLimit="100000" fileLimit="3" allowTypes="/(\.|\/)(gif|jpe?g|png)$/" />
-		 
+		    <p:fileUpload fileUploadListener="#{uploadController.fileUploadAction}" mode="advanced" dragDropSupport="false"
+		           update="messages" fileLimit="3" allowTypes="/(\.|\/)(gif|mp3|jpe?g|png)$/" />
+		           
+		    <h3 style="margin-top:0">Video:</h3>
+		    <p:media value="https://s3-sa-east-1.amazonaws.com/elasticbeanstalk-sa-east-1-585199353882/Sleep+Away.mp3" width="420" height="315" player="flash"/>
+ 		 
 		    <p:growl id="messages" showDetail="true" />
 		</h:form>
 	</ui:define>

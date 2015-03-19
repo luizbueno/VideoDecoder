@@ -1,8 +1,10 @@
 package com.videodecoder.controller;
 
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.faces.application.FacesMessage;
 import javax.faces.bean.ManagedBean;
@@ -23,47 +25,38 @@ import com.amazonaws.services.s3.model.ObjectMetadata;
 import com.amazonaws.services.s3.model.Permission;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.services.s3.model.S3Object;
+import com.brightcove.zencoder.client.ZencoderClient;
+import com.brightcove.zencoder.client.ZencoderClientException;
+import com.brightcove.zencoder.client.model.ContainerFormat;
+import com.brightcove.zencoder.client.request.ZencoderCreateJobRequest;
+import com.brightcove.zencoder.client.request.ZencoderOutput;
+import com.brightcove.zencoder.client.response.ZencoderCreateJobResponse;
 
 @ManagedBean
-public class UploadController {
+public class UploadController implements Serializable{
+
+	private static final long serialVersionUID = 7330198589296796485L;
 
 	private UploadedFile file;
 
-	public void handleFileUpload(FileUploadEvent event) {
-		//teste
-		try {
-			
-			String caminho = FacesContext.getCurrentInstance().getExternalContext()  
-	                .getRealPath("");  
-	  
-	        byte[] conteudo = event.getFile().getContents();  
-	        FileOutputStream fos = new FileOutputStream("C://java//");  
-	        fos.write(conteudo);  
-	        fos.close();
-
-			FacesMessage message1 = new FacesMessage("O Arquivo", event.getFile().getFileName() + " realizou upload com sucesso!");
-			FacesContext.getCurrentInstance().addMessage(null, message1);
-
-		} catch (IOException e) {
-			FacesMessage message2 = new FacesMessage("O Arquivo", event.getFile().getFileName() + " falhou ao realizar o upload!");
-			FacesContext.getCurrentInstance().addMessage(null, message2);
-		}
-
-	}	
+	private String urlArquivo = "";
 
 	public void fileUploadAction(FileUploadEvent event) {  
 		this.file = event.getFile();  
-		String bucketName = "yourBucket";  
+		String bucketName = "elasticbeanstalk-sa-east-1-585199353882";  
 		AWSCredentials credentials = null;  
 		try {  
 			credentials = new ProfileCredentialsProvider().getCredentials();  
 			System.out.println("Key: " + credentials.getAWSAccessKeyId() + ", Secret: " + credentials.getAWSSecretKey());  
-		} catch (Exception e) {  
-			throw new AmazonClientException(  
-					"Cannot load the credentials from the credential profiles file. " +  
-							"Please make sure that your credentials file is at the correct " +  
-							"location (~/.aws/credentials), and is in valid format.",  
-							e);  
+		} catch (Exception e) {
+
+			FacesMessage message1 = new FacesMessage("O Arquivo", event.getFile().getFileName() + " falhou ao realizar o Upload. " + 
+					" Houve um erro na conexão com as credenciais da Amazon AWS.");
+			FacesContext.getCurrentInstance().addMessage(null, message1);
+
+			throw new AmazonClientException("Não foi possivel carregar as credenciais do arquivo de profiles de credenciais. "
+					+ "Por favor verifique se seu arquivo de credenciais está no caminho correto "
+					+ "(~/.aws/credentials) e se está em um formato válido.", e);
 		}  
 		AmazonS3 s3 = new AmazonS3Client(credentials);  
 		AccessControlList acl = new AccessControlList();  
@@ -78,22 +71,73 @@ public class UploadController {
 			InputStream input = file.getInputstream();
 			s3Object.setObjectContent(input);  
 			s3.putObject(new PutObjectRequest(bucketName, keyName, input, omd).withAccessControlList(acl));  
-			s3Object.close();  
-			System.out.println("Uploaded successfully!");  
+			s3Object.close(); 
+
+			setUrlArquivo("https://s3-sa-east-1.amazonaws.com/elasticbeanstalk-sa-east-1-585199353882/" + file.getFileName());
+
+			realizaConversaoVideo();
+			
+			FacesMessage message2 = new FacesMessage("O Arquivo", event.getFile().getFileName() + " realizou o upload com sucesso! ");
+			FacesContext.getCurrentInstance().addMessage(null, message2);
+
 		} catch (AmazonServiceException ase) {  
-			System.out.println("Caught an AmazonServiceException, which means your request made it to Amazon S3, but was "  
-					+ "rejected with an error response for some reason.");  
+			System.out.println("Foi detectado uma exceção do tipo AmazonServiceException, que siginifica que a requisição foi feita a Amazon S3, "  
+					+ "mas foi rejeitada com uma resposta de erro por algum motivo. Segue os dados do erro:");  
 			System.out.println("Error Message:  " + ase.getMessage());  
 			System.out.println("HTTP Status Code: " + ase.getStatusCode());  
 			System.out.println("AWS Error Code:  " + ase.getErrorCode());  
 			System.out.println("Error Type:    " + ase.getErrorType());  
-			System.out.println("Request ID:    " + ase.getRequestId());  
+			System.out.println("Request ID:    " + ase.getRequestId());
+
+			FacesMessage message3 = new FacesMessage("O Arquivo", event.getFile().getFileName() + " falhou ao realizar o Upload. " + 
+					" Foi detectado uma exceção do tipo AmazonServiceException, que siginifica que a requisição foi feita a Amazon S3, "  
+					+ "mas foi rejeitada com uma resposta de erro por algum motivo.");
+			FacesContext.getCurrentInstance().addMessage(null, message3);
+
 		} catch (AmazonClientException ace) {  
-			System.out.println("Caught an AmazonClientException, which means the client encountered an internal error while "  
-					+ "trying to communicate with S3, such as not being able to access the network.");  
+			System.out.println("Foi detectado uma exceção do tipo AmazonClientException, que siginifica que o cliente tentou se comunicar com a Amazon S3 "  
+					+ "mas não foi possível acessar a rede.");
+
+			FacesMessage message4 = new FacesMessage("O Arquivo", event.getFile().getFileName() + " falhou ao realizar o Upload. " + 
+					"Foi detectado uma exceção do tipo AmazonClientException, que siginifica que o cliente tentou se comunicar com a Amazon S3 "  
+					+ "mas não foi possível acessar a rede.");
+			FacesContext.getCurrentInstance().addMessage(null, message4);
+
 		} catch (IOException e) {
 			e.printStackTrace();
 		}  
-	}  
+	}
+	
+	public void realizaConversaoVideo() {
+		
+		ZencoderClient client = new ZencoderClient("bebd51c3884d45e0538d88a80a9fe102");
+		
+		ZencoderCreateJobRequest job = new ZencoderCreateJobRequest();
+		job.setInput(getUrlArquivo());
+		List<ZencoderOutput> outputs = new ArrayList<ZencoderOutput>();
+
+		ZencoderOutput output1 = new ZencoderOutput();
+		output1.setFormat(ContainerFormat.MP4);
+		outputs.add(output1);
+
+		job.setOutputs(outputs);
+		try {
+			ZencoderCreateJobResponse response = client.createZencoderJob(job);
+			setUrlArquivo(response.getOutputs().get(0).getUrl());
+		} catch (ZencoderClientException e) {
+			FacesMessage message5 = new FacesMessage("O Arquivo", file.getFileName() + " falhou ao realizar o Upload." + 
+					"Foi detectado uma exceção do tipo ZencoderClientException, que siginifica que ocorreu algum problema durante a conversão do vídeo.");
+			FacesContext.getCurrentInstance().addMessage(null, message5);
+			e.printStackTrace();
+		}
+	}
+
+	public String getUrlArquivo() {
+		return urlArquivo;
+	}
+
+	public void setUrlArquivo(String urlArquivo) {
+		this.urlArquivo = urlArquivo;
+	}
 
 }
