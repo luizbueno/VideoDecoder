@@ -10,6 +10,7 @@ import javax.faces.application.FacesMessage;
 import javax.faces.bean.ManagedBean;
 import javax.faces.context.FacesContext;
 
+import org.apache.commons.lang.StringEscapeUtils;
 import org.primefaces.event.FileUploadEvent;
 import org.primefaces.model.UploadedFile;
 
@@ -41,7 +42,7 @@ public class UploadController implements Serializable{
 
 	private String urlArquivo = "";
 
-	public void fileUploadAction(FileUploadEvent event) {  
+	public String fileUploadAction(FileUploadEvent event) {  
 		this.file = event.getFile();  
 		String bucketName = "elasticbeanstalk-sa-east-1-585199353882";  
 		AWSCredentials credentials = null;  
@@ -105,10 +106,12 @@ public class UploadController implements Serializable{
 
 		} catch (IOException e) {
 			e.printStackTrace();
-		}  
+		}
+		
+		return "index";
 	}
 
-	public void realizaConversaoVideo() {
+	public String realizaConversaoVideo() {
 
 		ZencoderClient client = new ZencoderClient("bebd51c3884d45e0538d88a80a9fe102");
 
@@ -130,11 +133,12 @@ public class UploadController implements Serializable{
 					+ "Erro: " + e.getMessage());
 			FacesContext.getCurrentInstance().addMessage(null, message5);
 			e.printStackTrace();
-		}
+		}		
+		return "index";
 	}
 
 	public String getUrlArquivo() {
-		return urlArquivo;
+		return StringEscapeUtils.unescapeHtml(urlArquivo);
 	}
 
 	public void setUrlArquivo(String urlArquivo) {
